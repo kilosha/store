@@ -1,0 +1,866 @@
+/* eslint-disable linebreak-style */
+document.addEventListener("DOMContentLoaded", () => {
+
+    const MAX_RATING = 5,
+          storesList = document.querySelector(".stores-list"),
+          searchStoreButton = document.querySelector(".search-form__icon"),
+          searchInput = document.querySelector(".search-form__input"),
+          emptyStoresList = document.querySelector(".empty-stores-list"),
+          storeDetailsHeaderTitle = document.querySelector(".store-details__header__title"),
+          unselectedStore = document.querySelectorAll(".unselected-store"),
+          storeDetailsFooter = document.querySelector(".store-details__footer"),
+          storeAdressSection = document.querySelector(".store-details__wrapper"),
+          storeEmail = storeAdressSection.querySelector("#store-email"),
+          storePhoneNumber = storeAdressSection.querySelector("#store-phone-number"),
+          storeAddress = storeAdressSection.querySelector("#store-address"),
+          storeEstablishedDate = storeAdressSection.querySelector("#store-established-date"),
+          storeFloorArea = storeAdressSection.querySelector("#store-floor-area"),
+          productStatusesSection = document.querySelector(".product-statuses"),
+          productsAmount = productStatusesSection.querySelector("#products-amount"),
+          productsAvailable = productStatusesSection.querySelector("#ok-products"),
+          productsInStorage = productStatusesSection.querySelector("#storage-products"),
+          productsAbsent = productStatusesSection.querySelector("#out-of-stock-products"),
+          productsTable = document.querySelector(".products-table"),
+          productsTableBody = productsTable.querySelector("#table__body"),
+          createStoreBtn = document.querySelector("#create-store-btn"),
+          createStorePopup = document.querySelector("#create-store-popup"),
+          createStoreForm = document.querySelector("#create-store-form"),
+          createStoreInputs = createStorePopup.querySelectorAll(".popup-input"),
+          createStoreFormMessage = document.querySelector("#create-store-message"),
+          cancelCreatingStoreBtn = document.querySelector("#cancel-creating-store-btn"),
+          createProductBtn = document.querySelector("#create-product-btn"),
+          createProductPopup = document.querySelector("#create-product-popup"),
+          createProductForm = document.querySelector("#create-product-form"),
+          createProductFormFields = createProductForm.querySelectorAll(".popup-input, .popup-textarea"),
+          createProductStatusOptions = document.querySelectorAll(".create-option-js"),
+          createProductFormMessage = document.querySelector("#create-product-message"),
+          cancelCreatingProductBtn = document.querySelector("#cancel-creating-product-btn"),
+          deleteStoreBtn = document.querySelector('.delete-btn'),
+          productStatuses = document.querySelectorAll(".product-status-js"),
+          editProductPopup = document.querySelector("#edit-product-popup"),
+          editProductForm = document.querySelector("#edit-product-form"),
+          submitEditProductBtn = document.querySelector("#submit-edit-product-btn"),
+          cancelEditingProductBtn = document.querySelector("#cancel-editing-product-btn"),
+          editProductName = document.querySelector("#edit-product-name"),
+          editProductPrice = document.querySelector("#edit-product-price"),
+          editProductSpecs = document.querySelector("#edit-product-specs"),
+          editProductRating = document.querySelector("#edit-product-rating"),
+          editProductSupplier = document.querySelector("#edit-product-supplier-info"),
+          editProductMadeIn = document.querySelector("#edit-product-made-in"),
+          editProductProductionCompany = document.querySelector("#edit-product-production-company"),
+          editProductStatusOptions = document.querySelectorAll(".edit-option-js"),
+          sortProductsBtn = document.querySelectorAll('.sort-btn'),
+          productsTableMessage = document.querySelector(".no-products-available");
+
+
+    /**
+     * Model class. Knows everything about API endpoint and data structure. Can format/map data to any structure.
+     *
+     * @constructor
+     */     
+    function Model() {
+
+        /**
+        *URL template for getting the stores from the server.
+	    * @type {string}
+        *
+        */
+        const API_STORES = "http://localhost:3000/api/Stores/";
+
+        /**
+        *URL template for getting the products from the server.
+	    * @type {string}
+        *
+        */
+        const API_PRODUCTS = "http://localhost:3000/api/Products/";
+        
+        
+        /**
+         * Get the stores from the server by url.
+         *
+         * @returns {Object} with stores.
+         *
+         * @public
+         * @async
+         */
+        this.getStores = async function() {
+            const response = await fetch(API_STORES);
+            return await response.json();
+        }
+
+        /**
+         * Get the store from the server by id.
+         *
+         * @param {String} storeId the store id.
+         * 
+         * @returns {Object} with the store.
+         *
+         * @public
+         * @async
+         */
+        this.getStoreById = async function (storeId) {
+            const url = `${API_STORES}${storeId}`;
+            
+            const response = await fetch(url);
+            return await response.json();
+        }
+
+        /**
+         * Get the products of the selected store from the server by storeid and filtered it by product status.
+         *
+         * @param {String} storeId the store id.
+         * @param {String} storeStatus the store status, default value = "all".
+         * 
+         * @returns {Object} with the array of products.
+         *
+         * @public
+         * @async
+         */
+        this.getProducts = async function (storeId, storeStatus = "all") {
+
+            if (storeStatus == "all") {
+                const url = `${API_STORES}${storeId}/rel_Products`;
+    
+                const response = await fetch(url);
+                return await response.json();
+            } else {
+                const url = `${API_PRODUCTS}?filter={"where": {"and": [{"Status": "${storeStatus}"},{"StoreId": "${storeId}"}]}}`;
+    
+                const response = await fetch(url);
+                return await response.json();
+            }
+        }
+
+        /**
+        * Get the products info of the selected product from the server by product id value.
+        *
+        * @param {String} productId the product id.
+        * 
+        * @returns {Object} with product information.
+        *
+        * @public
+        * @async
+        */
+        this.getProductInfo = async function(productId) {
+            const response = await fetch(`${API_PRODUCTS}${productId}`);
+            const product = await response.json();
+            return product;
+        }
+
+        /**
+        * Delete the product from products list
+        * @async
+        * @param {String} productId the product id.
+        * @param {String} activeStoreId the store id.
+        *
+        * @public
+        */
+        this.deleteProduct = async function(activeStoreId, productId) {
+            return await fetch(`${API_STORES}${activeStoreId}/rel_Products/${productId}`, {
+                method: "DELETE"
+            })
+        }
+    
+        /**
+        * Search the store by input text
+        * @async
+        * @param {String} input is the seatch input value
+        *         
+        * @returns {Object} with all stores that matches with input in name, address or floor area.
+        *
+        * @public
+        */
+        this.searchStore = async function (input) {
+            storesList.innerHTML = "";
+    
+            let url = `${API_STORES}?filter={"where": {"or": [{"Name": {"regexp": "/${input}/i"}},{"Address": {"regexp": "/${input}/i"}}, {"FloorArea": "${input}"}]}}`;
+            
+            let response = await fetch(url);
+
+            if (response.ok) {
+                let json = await response.json();
+               
+                if (json.length > 0) {
+                        emptyStoresList.classList.add("hidden");
+                        return json;
+                } else {
+                        emptyStoresList.classList.remove("hidden");
+                }  
+            }
+        }
+
+        /**
+        * Create a new store with the entering params
+        * @async
+        *         
+        * @returns {Object} a new store
+        *
+        * @public
+        */
+        this.createStore = async function() {
+            const   Name = createStoreForm.querySelector("#create-store-name").value,
+                    Email = createStoreForm.querySelector("#create-store-email").value,
+                    PhoneNumber = createStoreForm.querySelector("#create-store-phone-number").value,
+                    Address = createStoreForm.querySelector("#create-store-address").value,
+                    Established = createStoreForm.querySelector("#create-store-established-date").value,
+                    FloorArea = createStoreForm.querySelector("#create-store-floor-area").value;
+    
+            const store = {Name, Email, PhoneNumber, Address, Established, FloorArea};
+    
+            createStoreForm.reset();
+    
+            return await fetch(API_STORES, {
+                method: "POST",
+                headers: {
+                    "Content-type": "application/json"
+                },
+                body: JSON.stringify(store)
+            })
+        }
+    
+        /**
+        * Create a new product with the entering params
+        * @async
+        *         
+        * @param {Object} object is a new product object
+        * 
+        * @returns {Object} a new product
+        *
+        * @public
+        */
+        this.createProduct = async function(object) {
+            return await fetch(API_PRODUCTS, {
+                method: "POST",
+                headers: {
+                    "Content-type": "application/json"
+                },
+                body: JSON.stringify(object)
+            })
+        }
+    
+        /**
+        * Edit information about concrete product
+        * @async
+        *         
+        * @param {String} activeProductId is thw selected product id
+        * 
+        * @returns {Object} the product with new params
+        *
+        * @public
+        */
+        this.editProduct = async function (activeProductId) {
+            const product = await this.getProductInfo(activeProductId);
+    
+            product.Name = editProductName.value;
+            product.Price = editProductPrice.value
+            product.Specs = editProductSpecs.value;
+            product.Rating = editProductRating.value;
+            product.SupplierInfo = editProductSupplier.value;
+            product.MadeIn = editProductMadeIn.value;
+            product.ProductionCompanyName = editProductProductionCompany.value;
+            editProductStatusOptions.forEach(option => {
+                if (option.selected === true) {
+                    product.Status = option.value;
+                }
+            });
+    
+            return await fetch(`${API_PRODUCTS}${activeProductId}`, {
+                method: "PUT",
+                headers: {
+                    "Content-type": "application/json"
+                },
+                body: JSON.stringify(product)
+            });
+        }
+
+        /**
+        * Filter products of the selected store by status
+        * @async
+        *         
+        * @param {String} activeListItem is the selected product status
+        * 
+        * @returns {Object} with all products which have selected product status
+        *
+        * @public
+        */
+        this.filterProducts = async function (activeListItem) {
+            const activeStoreId = document.querySelector(".active-store").getAttribute("data-id");
+    
+            activeListItem.classList.add("filtered");
+            
+            const products = await this.getProducts(activeStoreId, activeListItem.id);
+            return await products;
+        }
+    
+        /**
+        * Delete selected store from the server database
+        * @async
+        *         
+        * @param {String} activeStoreId is the selected store id
+        * 
+        * @public
+        */
+        this.deleteStore = async function(activeStoreId) {
+            return await fetch(`${API_STORES}${activeStoreId}`, {
+                method: "DELETE"
+            });
+        }
+
+        /**
+        * Sort products by selected params
+        * @async
+        *         
+        * @param {String} sortParam is the selected sort param (ex. name, price, ect.)
+        * @param {Object} func is sort function (ex. sort-down or sort-up)
+        * 
+        * @returns {Object} with sorted products
+        * 
+        * @public
+        */
+        this.sortProducts = async function (sortParam, func) {
+            const activeStoreId = document.querySelector(".active-store").getAttribute("data-id");
+            let activeProductStatus = document.querySelectorAll(".products-amount__all");
+    
+            productStatuses.forEach(status => {
+                if (status.classList.contains("filtered")) {
+                    activeProductStatus = status;
+                }
+            });
+    
+            const products = await this.getProducts(activeStoreId, activeProductStatus.id);
+    
+            products.sort(func(sortParam));
+                
+            return products;
+        }
+    }
+    
+    /**
+    * View class. Knows everything about dom & manipulation and a little bit about data structure, which should be
+    * filled into UI element.
+    *
+    * @constructor
+    */
+    function View() {
+
+        /**
+         * Iterating over the array to render stores list
+         *
+         * @param {Object} storesArray object with stores
+         * 
+         * @public
+         */
+        this.renderStoresList = function (storesArray) {
+            storesArray.forEach(store => this.renderStoreItem(store));
+        }
+
+        /**
+         * Render store item in store list section
+         *
+         * @param {Object} store object store
+         * 
+         * @public
+         */
+        this.renderStoreItem = function (store) {
+            const li = document.createElement("li");
+            li.innerHTML = `
+                            <div class="stores-list__item" data-id=${store.id}>
+                                    <div class="stores-list__item_main">
+                                        <h4 class="stores-list__title">${store.Name}</h4>
+                                        <span class="stores-list__floor-area">${store.FloorArea}
+                                            <span class="unit">sq.m</span>
+                                        </span>    
+                                    </div>
+                                    <span class="stores-list__address">${store.Address}</span>
+                            </div>`;
+            storesList.appendChild(li);
+        }    
+
+        /**
+         * Render store address section by filling the information of the selected store
+         *
+         * @param {Object} store the selected store
+         * 
+         * @public
+         */
+        this.renderStoreAddressSection = function(store) {
+            storeAdressSection.classList.remove("hidden");
+    
+            storeEmail.innerHTML = `${store.Email}`;
+            storePhoneNumber.innerHTML = `${store.PhoneNumber}`;
+            storeAddress.innerHTML = `${store.Address}`;
+            storeEstablishedDate.innerHTML = `${store.Established.slice(0, 10)}`;
+            storeFloorArea.innerHTML = `${store.FloorArea}`;
+        }
+    
+        /**
+         * Render product statuses section by filling the information about product statuses of the 
+         * selected store
+         *
+         * @param {Object} products array of products of the selected store
+         * 
+         * @public
+         */
+        this.renderProductsStatusesSection = function(products) {
+            productStatusesSection.classList.remove("hidden");
+    
+            productsAmount.innerHTML = `${products.length}`;
+            productsAvailable.innerHTML = `${products.filter(product => product.Status == "OK").length}`;
+            productsInStorage.innerHTML = `${products.filter(product => product.Status == "STORAGE").length}`;
+            productsAbsent.innerHTML = `${products.filter(product => product.Status == "OUT_OF_STOCK").length}`;
+        }
+
+        /**
+         * Render product table by iterating over the products array
+         *
+         * @param {Object} products array of products of the selected store
+         * 
+         * @public
+         */
+        this.renderProductsTable = function (products) {
+            const productsItem = productsTable.querySelectorAll(".product-item");
+    
+            productsTable.classList.remove("hidden");
+    
+            productsItem.forEach(item => {
+                productsTableBody.removeChild(item)
+            });
+    
+            if (products.length == 0) {
+                productsTableMessage.classList.remove("hidden");
+            } else {
+                productsTableMessage.classList.add("hidden");
+    
+                products
+                .map(product => this.renderProductItem(product))
+                .forEach(item => {
+                    let tr = document.createElement("tr");
+                    tr.classList.add("product-item");
+                    tr.innerHTML = item;
+                    productsTableBody.appendChild(tr);
+                });
+            }
+        }
+
+        /**
+         * Render product item of the table
+         *
+         * @param {Object} product store product
+         * 
+         * @public
+         */
+        this.renderProductItem = function (product) {
+            return `
+                <tr class="product-item">
+                    <td class="product-table__cell product-name">
+                        <p class="product__text">${product.Name}</p>
+                        <span class="product-item__id">${product.id}</span>
+                    </td>
+                    <td class="product-table__cell product-price">
+                        <div class="price">
+                            <span class="product__text">${product.Price +" "}
+                                <span class="currency">USD</span>
+                            </span>
+                        </div>
+                    </td>
+                    <td class="product-table__cell product-specs" title="${product.Specs}">
+                        ${product.Specs}
+                    </td>
+                    <td class="product-table__cell product-supplier" title="${product.SupplierInfo}">
+                        ${product.SupplierInfo}
+                    </td>
+                    <td class="product-table__cell product-country">
+                        ${product.MadeIn}
+                    </td>
+                    <td class="product-table__cell product-company">
+                        ${product.ProductionCompanyName}
+                    </td>
+                    <td class="product-table__cell product-rating">
+                        ${"<span class='fa fa-star checked'></span>".repeat(product.Rating)}
+                        ${"<span class='fa fa-star'></span>".repeat(MAX_RATING-product.Rating)}
+                    </td>
+                    <td class="product-table__cell edit-product"><img class="edit" src="/src/icons/icons8-edit.svg"></td>
+                    <td class="product-table__cell delete-product"><img class="delete" src="/src/icons/delete-product.svg"></td>
+                    <td class="product-table__cell arrow"><img class="arrow" src="/src/icons/rightarrow_121279.svg"></td>
+                </tr>`;
+        }
+    
+        /**
+        * Filling the edit popup with selected product information
+        *
+        * @param {Object} product selected store product
+        * 
+        * @public
+        */
+        this.fillEditProductPopup = function (product) {
+            editProductForm.setAttribute("data-product-id", product.id);
+            editProductName.value = product.Name; 
+            editProductPrice.value = product.Price;
+            editProductSpecs.innerHTML = product.Specs;
+            editProductRating.value = product.Rating;
+            editProductSupplier.innerHTML = product.SupplierInfo;
+            editProductMadeIn.value = product.MadeIn;
+            editProductProductionCompany.value = product.ProductionCompanyName;
+            editProductStatusOptions.forEach (option => {
+                if (option.value === product.Status) {
+                    option.setAttribute("selected","selected");
+                }
+            })
+        }
+
+        /**
+        * Validate creating store form
+        *
+        * @returns {Boolean} which show are all form input was filled or not 
+        * 
+        * @public
+        */
+        this.createStoreFormValidation = function() {
+            let invalidInput = 0;
+            createStoreInputs.forEach(input => input.classList.remove("invalidInput"));
+           
+            createStoreInputs.forEach(input => {
+                if (!input.value) {
+                    input.classList.add("invalidInput");
+                    invalidInput += 1;
+                } 
+            });
+    
+            if (invalidInput > 0) {
+                createStoreFormMessage.classList.remove("hidden");
+            } else {
+                createStoreFormMessage.classList.add("hidden");
+            }
+    
+            return invalidInput == 0;
+        }
+    
+        /**
+        * Validate creating product form
+        *
+        * @returns {Boolean} which show are all form input was filled or not 
+        * 
+        * @public
+        */
+        this.createProductFormValidation = function () {
+            let invalidInput = 0;
+            createProductFormFields.forEach(input => input.classList.remove("invalidInput"));
+           
+            createProductFormFields.forEach(input => {
+                if (!input.value) {
+                    input.classList.add("invalidInput");
+                    invalidInput += 1;
+                } 
+            });
+    
+            if (invalidInput > 0) {
+                createProductFormMessage.classList.remove("hidden");
+            } else {
+                createProductFormMessage.classList.add("hidden");
+            }
+    
+            return invalidInput == 0;
+        }
+    
+        /**
+        * Set the value of the sort buttons to their original value
+        * 
+        * @public
+        */
+        this.dropSorting = function () {
+            sortProductsBtn.forEach(btn => {
+                btn.classList.add("unsorted");
+                btn.classList.remove("sorted-up");
+                btn.classList.remove("sorted-down");
+            })
+        }
+    
+        /**
+        * Sorts by the specified parameter from top to bottom
+        *
+        * @param {String} field the parameter by which the sorting is performed
+        * 
+        * @public
+        */
+        this.sortDownByField = function (field) {
+            if (field === "Price" || field === "Rating") {
+                return (a,b) => a[field]<b[field]? 1 : -1; 
+            }
+            return (a,b) => a[field]>b[field] ? 1 : -1;
+        }
+
+        /**
+        * Sorts by the specified parameter from bottom to top
+        *
+        * @param {String} field the parameter by which the sorting is performed
+        * 
+        * @public
+        */
+        this.sortUpByField = function (field) {
+            if (field === "Price" || field === "Rating") {
+                return (a,b) => a[field]>b[field] ? 1 : -1;
+            }
+            return (a,b) => a[field]<b[field] ? 1 : -1;
+        }
+    }
+
+    /**
+    * Controller class. Orchestrates the model and view objects. A "glue" between them.
+    *
+    * @param {View} view view instance.
+    * @param {Model} model model instance.
+    *
+    * @constructor
+    */
+    function Controller(view, model) {
+
+        /**
+	    * Initialize controller.
+	    *
+	    * @public
+	    */
+        this.init = function() {
+            model.getStores().then(stores => view.renderStoresList(stores));
+        };
+
+        storesList.addEventListener("click", event => {
+            const activeListItem = event.target.closest("[data-id]"),
+                  storesListItem = document.querySelectorAll(".stores-list__item"),
+                  activeStoreId = activeListItem.getAttribute("data-id")
+        
+            storesListItem.forEach(store => store.classList.remove("active-store"));
+            activeListItem.classList.add("active-store");
+    
+            storeDetailsHeaderTitle.classList.remove("hidden");
+            unselectedStore.forEach(item => item.classList.add("hidden"));
+            storeDetailsFooter.classList.remove("hidden");
+    
+            model.getStoreById(activeStoreId)
+                .then(store => view.renderStoreAddressSection(store))
+                //.then(() => view.renderStoreDetailsSection(activeStoreId));
+                .then(() => model.getProducts(activeStoreId))
+                .then(products => {
+                    view.renderProductsStatusesSection(products);
+                    view.renderProductsTable(products);
+                    this.listenDeleteButtons();
+                    this.listenEditButtons();
+                })
+        });
+    
+        /**
+	    * Iterates over all delete product buttons and adds an event listener to them
+	    *
+	    * @public
+	    */
+        this.listenDeleteButtons = function() {
+            const deleteProductButtons = document.querySelectorAll('.delete-product');
+
+            deleteProductButtons.forEach(btn => {
+                btn.addEventListener("click", event => {
+                    const activeProduct = event.target.closest(".product-item"),
+                        activeProductName = activeProduct.querySelector(".product__text").innerHTML,
+                        activeProductId = activeProduct.querySelector('.product-item__id').innerHTML,
+                        activeStoreId = document.querySelector(".active-store").getAttribute("data-id"),
+                        deleteConfurmation = confirm(`Are you sure want to delete the product ${activeProductName}?`);
+    
+                    if (deleteConfurmation) {
+                        model.deleteProduct(activeStoreId,activeProductId)
+                            .then(() => model.getProducts(activeStoreId))
+                            .then(products => {
+                                view.renderProductsStatusesSection(products);
+                                view.renderProductsTable(products);
+                            })
+                    }
+                })
+            })
+        }
+
+        /**
+	    * Iterates over all edit product buttons and adds an event listener to them
+	    *
+	    * @public
+	    */
+        this.listenEditButtons = function() {
+            const editProductButtons = document.querySelectorAll(".edit-product");
+    
+            editProductButtons.forEach(btn => {
+                btn.addEventListener ("click", event => {
+                    const activeProduct = event.target.closest(".product-item"),
+                          activeProductId = activeProduct.querySelector('.product-item__id').innerHTML;
+                    
+                    editProductPopup.classList.remove("hidden");
+
+                    model.getProductInfo(activeProductId)
+                        .then(product => view.fillEditProductPopup(product));
+                });
+            });
+        }
+
+        searchStoreButton.addEventListener("click", () => {
+            model.searchStore(searchInput.value)
+                .then(response => view.renderStoresList(response))
+        });
+    
+        searchInput.addEventListener("keydown", event => {
+            if (event.keyCode === 13) {
+                event.preventDefault();
+                model.searchStore(searchInput.value)
+                    .then(response => view.renderStoresList(response))
+            }
+        });
+    
+        createStoreBtn.addEventListener("click", () => {
+            createStorePopup.classList.remove("hidden");
+        })
+    
+        createStorePopup.addEventListener("click", (event) => {
+            if (event.target === document.querySelector(".popup") || event.target === document.querySelector(".popup__body")) {
+                createStorePopup.classList.add("hidden"); 
+                createStoreInputs.forEach(input => input.classList.remove("invalidInput"));
+                createStoreFormMessage.classList.add("hidden");
+                createStoreForm.reset();    
+            }
+        })
+    
+        cancelCreatingStoreBtn.addEventListener("click", () => {
+            createStorePopup.classList.add("hidden"); 
+            createStoreInputs.forEach(input => input.classList.remove("invalidInput"));
+            createStoreFormMessage.classList.add("hidden");
+            createStoreForm.reset();
+        })
+    
+        const createNewStoreBtn = document.querySelector("#submit");
+
+        createNewStoreBtn.addEventListener("click", e => {
+            e.preventDefault();
+            if (view.createStoreFormValidation()) {
+                model.createStore()
+                    .then(() =>  model.getStores())
+                    .then(stores => view.renderStoresList(stores));
+            }
+        });
+
+        createStoreInputs.forEach(input => {
+            input.addEventListener("input", () => {
+                input.classList.remove("invalidInput");
+            })
+        });
+    
+        createProductFormFields.forEach(input => {
+            input.addEventListener("input", () => {
+                input.classList.remove("invalidInput");
+            })
+        });
+        
+        createProductBtn.addEventListener("click", () => {
+            createProductPopup.classList.remove("hidden");
+        })
+    
+        cancelCreatingProductBtn.addEventListener("click", () => {
+            createProductPopup.classList.add("hidden"); 
+            createProductFormFields.forEach(input => input.classList.remove("invalidInput"));
+            createProductFormMessage.classList.add("hidden");
+            createProductForm.reset();
+        })
+    
+        createProductForm.addEventListener("submit", (e) => {
+                e.preventDefault();
+                const formData = new FormData(createProductForm);
+    
+                const object = {};
+                formData.forEach(function(value,key) {
+                    object[key] = value;
+                });
+    
+                createProductStatusOptions.forEach(option => {
+                    if (option.selected === true) {
+                        object.Status = option.value;
+                    }
+                });
+    
+                object.StoreId = +document.querySelector(".active-store").getAttribute("data-id");
+
+                if (view.createProductFormValidation()) {
+                    createProductForm.reset();
+                    model.createProduct(object)
+                        .then(() => model.getProducts(object.StoreId))
+                        .then(products => {
+                            view.renderProductsStatusesSection(products);
+                            view.renderProductsTable(products);
+                            this.listenDeleteButtons();
+                            this.listenEditButtons();
+                        })
+        
+                }
+        });
+
+        submitEditProductBtn.addEventListener('click', (event) => {
+            event.preventDefault();
+            const activeProductId = editProductForm.getAttribute("data-product-id"),
+                  activeStoreId = document.querySelector(".active-store").getAttribute("data-id");
+    
+                model.editProduct(activeProductId)
+                    .then(() => view.renderStoreDetailsSection(activeStoreId));
+        });
+    
+        cancelEditingProductBtn.addEventListener("click", () => {
+            editProductPopup.classList.add("hidden"); 
+            createProductFormFields.forEach(input => input.classList.remove("invalidInput"));
+            createProductFormMessage.classList.add("hidden");
+            editProductForm.reset();
+        })
+
+
+        productStatuses.forEach(status => 
+            status.addEventListener("click", (event) => {
+                let activeListItem = event.target.closest(".product-status-js");
+    
+                productStatuses.forEach(status => status.classList.remove("filtered"));
+    
+                model.filterProducts(activeListItem)
+                    .then(products => view.renderProductsTable(products));
+            })
+        )
+    
+        deleteStoreBtn.addEventListener('click', () => {
+            const activeStore = document.querySelector(".active-store"),
+                activeStoreId = activeStore.getAttribute("data-id"),
+                storeName = activeStore.querySelector(".stores-list__title").innerHTML,
+                result = confirm(`Are you sure want to delete the store ${storeName}?`);
+    
+            if (result) {
+                model.deleteStore(activeStoreId)
+                    .then(() => model.getStores())
+                    .then(stores => view.renderStoresList(stores));
+            }
+        });
+
+        sortProductsBtn.forEach(btn => {
+            btn.addEventListener('click', (event) => {
+                if (event.target.classList.contains("unsorted")){
+                    view.dropSorting();
+                    event.target.classList.remove("unsorted");
+                    event.target.classList.add("sorted-down");
+    
+                    model.sortProducts(btn.getAttribute("data-sort"), view.sortDownByField)
+                        .then(products => view.renderProductsTable(products));
+                      
+                } else if (event.target.classList.contains("sorted-down")) {
+                    view.dropSorting();
+                    event.target.classList.remove("unsorted");
+                    event.target.classList.add("sorted-up");
+    
+                    model.sortProducts(btn.getAttribute("data-sort"), view.sortUpByField)
+                        .then(products => view.renderProductsTable(products));
+                } else {
+                    view.dropSorting();
+                    model.sortProducts("id", view.sortDownByField)
+                        .then(products => view.renderProductsTable(products));
+                }
+            });
+        })
+    }
+
+    (new Controller(new View(), new Model())).init();
+
+});

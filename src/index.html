@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Stores information</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="/src/css/style.css">
+</head>
+<body>
+    <aside class="stores">
+        <header class="header">
+            <h2 class="header__title">Stores list</h2>    
+        </header>
+        <div class="search__container">
+            <div class="search">
+                <form class="search__form">
+                    <input class="search-form__input" type="search" placeholder="Search">
+                    <img class="search-form__icon" title="Search" src="/src/icons/search.svg">    
+                </form>
+            </div>
+        </div>
+        <div class="empty-stores-list hidden">No stores matched</div>
+        <ul class="stores-list"></ul>
+        <footer class="store-list__footer">
+            <div class="button-container">
+                <button type="button" class="create-btn" id="create-store-btn">
+                    <img class="create-btn__icon" src="/src/icons/create.svg"> 
+                    <div class="create-btn__text">Create</div>
+                </button>
+            </div>    
+        </footer>
+    </aside>
+    <section class="store-details">
+        <header class="header store-details__header">
+            <h2 class="store-details__header__title header__title hidden">Store Details</h2>
+            <h2 class="header__default-title unselected-store">The store is not selected</h2>
+        </header>
+        <div class="unselected-store">
+            <img src="icons/store_icon.png">
+            <h3>The store is not selected</h3>
+            <h4>Please select the store to proceed</h4>
+        </div>
+
+        <div class="store-details__wrapper hidden">
+            <address class="header__store-information">
+                <p class="header__store-information__item">
+                    <span class="address-param">Email:  </span>
+                    <span id="store-email"></span>
+                </p>
+                <p class="header__store-information__item">
+                    <span class="address-param">Phone Number:  </span>
+                    <span id="store-phone-number"></span>
+                </p>
+                <p class="header__store-information__item">
+                    <span class="address-param">Address:  </span>
+                    <span id="store-address"></span>
+                </p>
+                <p class="header__store-information__item">
+                    <span class="address-param">Established Date:  </span>
+                    <span id="store-established-date"></span>
+                </p>
+                <p class="header__store-information__item">
+                    <span class="address-param">Floor Area:  </span>
+                    <span id="store-floor-area"></span>
+                </p>
+            </address>
+        </div>
+        <div class="product-statuses hidden">
+            <div class="products-amount__all product-status-js filtered" id="all">
+                <div class="amount-container">
+                    <p class="products-amount__number" id="products-amount"></p>
+                    <span class="products-amount__status">All</span></div>    
+                </div>
+            <div class="products-amount__ok product-status-js" id="OK">
+                <div class="products-amount__container">
+                    <img class="products-amount__ok-icon" src="/src/icons/ok.svg">
+                    <div class="products-amount__counter" id="ok-products"></div>
+                </div>
+                <p class="products-amount__status">Ok</p>
+            </div>
+            <div class="products-amount__storage product-status-js" id="STORAGE">
+                <div class="products-amount__container">
+                    <img class="products-amount__storage-icon" src="/src/icons/storage.svg">
+                    <div class="products-amount__counter" id="storage-products"></div>
+                </div>
+                <p class="products-amount__status">Storage</p>
+            </div>
+            <div class="products-amount__out product-status-js" id="OUT_OF_STOCK">
+                <div class="products-amount__container">
+                    <img class="products-amount__out-icon" src="/src/icons/out-of-stock.svg">
+                    <div class="products-amount__counter" id="out-of-stock-products"></div>
+                </div>
+                <p class="products-amount__status">Out of stock</p>    
+            </div>
+        </div>
+        <table class="products-table hidden">
+            <caption class="products-table__caption">Products</caption>
+            <thead class="table__head">
+                <tr class="table__head_row">
+                    <th class="product-table__head product-name">
+                        <button class="sort-btn unsorted" data-sort="Name"></button>
+                        <span>Name</span>
+                    </th>
+                    <th class="product-table__head product-price">
+                        <button class="sort-btn unsorted" data-sort="Price"></button>
+                        <span>Price</span>
+                    </th>
+                    <th class="product-table__head product-specs">
+                        <button class="sort-btn unsorted" data-sort="Specs"></button>
+                        <span>Specs</span>
+                    </th>
+                    <th class="product-table__head product-supplier">
+                        <button class="sort-btn unsorted" data-sort="SupplierInfo"></button>
+                        <span>SupplierInfo</span>
+                    </th>
+                    <th class="product-table__head product-country">
+                        <button class="sort-btn unsorted" data-sort="MadeIn"></button>
+                        <span>Country of origin</span>
+                    </th>
+                    <th class="product-table__head product-company">
+                        <button class="sort-btn unsorted" data-sort="ProductionCompanyName"></button>
+                        <span>Prod. company</span>
+                    </th>
+                    <th class="product-table__head product-rating">
+                        <button class="sort-btn unsorted" data-sort="Rating"></button>
+                        <span>Rating</span>
+                    </th>
+                    <th class="product-table__head product-details"></th>
+                    <th class="product-table__head product-details"></th>
+                    <th class="product-table__head product-details"></th>
+                </tr>
+            </thead>
+            <tbody id="table__body"></tbody>
+        </table>
+        <div class="no-products-available hidden">There are no available products.</div>
+        <footer class="store-details__footer hidden">
+            <div class="button-container">
+                <button type="button" class="create-btn" id="create-product-btn">
+                    <img class="create-btn__icon" src="/src/icons/create.svg"> 
+                    <div class="create-btn__text">Create</div>
+                </button>
+                <button type="button" class="delete-btn">
+                    <img class="delete-btn__icon" src="/src/icons/delete.svg"> 
+                    <div class="delete-btn__text">Delete</div>
+                </button>
+            </div>    
+        </footer>
+    </section> 
+    <div class="popup hidden" id="create-store-popup">
+        <div class="popup__body">
+            <div class="popup__content">
+                <h2 class="popup__title">Create new store</h2>
+                <form action="#" method="POST" class="popup__form" id="create-store-form">
+                    <ul>
+                        <li class="popup__list-item">
+                          <label for="name"><span class="required-input">*</span>Name:</label>
+                          <input class="popup-input" type="text" id="create-store-name" name="Name" placeholder="Enter name">
+                        </li>
+                        <li class="popup__list-item">
+                          <label for="email"><span class="required-input">*</span>E-mail:</label>
+                          <input class="popup-input" type="email" id="create-store-email" name="Email" placeholder="Enter email">
+                        </li>
+                        <li class="popup__list-item">
+                            <label for="phone-number"><span class="required-input">*</span>Phone Number:</label>
+                            <input class="popup-input" type="tel" id="create-store-phone-number" name="PhoneNumber" placeholder="Enter phone number">
+                          </li>
+                          <li class="popup__list-item">
+                            <label for="address"><span class="required-input">*</span>Address:</label>
+                            <input class="popup-input" type="text" id="create-store-address" name="Address" placeholder="Enter address">
+                          </li>
+                          <li class="popup__list-item">
+                            <label for="established-date"><span class="required-input">*</span>Established date:</label>
+                            <input class="popup-input" type="date" id="create-store-established-date" name="Established" placeholder="">
+                          </li>
+                          <li class="popup__list-item">
+                            <label for="floor-area"><span class="required-input">*</span>Floor Area:</label>
+                            <input class="popup-input" type="text" id="create-store-floor-area" name="FloorArea" placeholder="Enter floor area (in sq.m)">
+                          </li>
+                    </ul>
+                </form>
+                <div class="hidden form-message" id="create-store-message">Please, fill all requed (*) fields</div>
+                <footer class="popup__footer">
+                    <button type="button "class="popup-btn" id="submit">Create</button>
+                    <input type="button" value="Cancel" class="popup-btn" id="cancel-creating-store-btn">
+                </footer>    
+            </div>
+        </div>
+    </div>
+    <div class="popup hidden" id="create-product-popup">
+        <div class="popup__body">
+            <div class="popup__content">
+                <h2 class="popup__title">Create new product</h2>
+                <form action="#" class="popup__form" id="create-product-form">
+                    <ul>
+                        <li class="popup__list-item">
+                          <label for="name"><span class="required-input">*</span>Name:</label>
+                          <input class="popup-input" type="text"  name="Name" placeholder="Enter name">
+                        </li>
+                        <li class="popup__list-item">
+                            <label for="price"><span class="required-input">*</span>Price:</label>
+                            <div class="price-input-wrapper">
+                                <input class="popup-input price-input" type="price" id="price" name="Price" placeholder="Enter price"> 
+                                <span>USD</span>
+                            </div>
+                        </li>
+                        <li class="popup__list-item">
+                            <label for="specs"><span class="required-input">*</span>Specs:</label>
+                            <textarea class="popup-textarea" id="specs" name="Specs" placeholder="Enter product specs"></textarea>
+                        </li>
+                        <li class="popup__list-item">
+                            <label for="rating"><span class="required-input">*</span>Rating:</label>
+                            <input class="popup-input" type="number" id="rating" name="Rating" placeholder="Enter rating 1..5" min="1" max="5">
+                        </li>
+                        <li class="popup__list-item">
+                            <label for="supplierInfo"><span class="required-input">*</span>Supplier info:</label>
+                            <textarea class="popup-textarea" id="SupplierInfo" name="SupplierInfo" placeholder="Enter supplier info"></textarea>
+                        </li>
+                        <li class="popup__list-item">
+                            <label for="madeIn"><span class="required-input">*</span>Made in:</label>
+                            <input class="popup-input" type="text" id="madeIn" name="MadeIn" placeholder="Enter origin country">
+                        </li>
+                        <li class="popup__list-item">
+                            <label for="productionCompany"><span class="required-input">*</span>Production company name:</label>
+                            <input class="popup-input" type="text" id="productionCompany" name="ProductionCompanyName" placeholder="Enter manufacturer name">
+                        </li>
+                        <li class="popup__list-item">
+                            <label for="status"><span class="required-input">*</span>Status:</label>
+                            <select class="popup-select" name="Status" id="status" form="create-product-form">
+                                <option value="OK" class="create-option-js">Ok</option>
+                                <option value="STORAGE" class="create-option-js">Storage</option>
+                                <option value="OUT_OF_STOCK" class="create-option-js">Out of stock</option>
+                            </select>
+                        </li>
+                    </ul>
+                    <div class="hidden form-message" id="create-product-message">Please, fill all requed (*) fields</div>
+                    <footer class="popup__footer">
+                        <input type="submit" value="Create" class="popup-btn">
+                        <input type="button" value="Cancel" class="popup-btn" id="cancel-creating-product-btn">
+                    </footer>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="popup hidden" id="edit-product-popup">
+        <div class="popup__body">
+            <div class="popup__content">
+                <h2 class="popup__title">Edit product</h2>
+                <form action="#" class="popup__form" id="edit-product-form" data-product-id="">
+                    <ul>
+                        <li class="popup__list-item">
+                          <label for="name"><span class="required-input">*</span>Name:</label>
+                          <input class="popup-input" id="edit-product-name" type="text"  name="Name" placeholder="Enter name">
+                        </li>
+                        <li class="popup__list-item">
+                            <label for="price"><span class="required-input">*</span>Price:</label>
+                            <div class="price-input-wrapper">
+                                <input class="popup-input price-input" type="price" id="edit-product-price" name="Price" placeholder="Enter price"> 
+                                <span>USD</span>
+                            </div>
+                        </li>
+                        <li class="popup__list-item">
+                            <label for="specs"><span class="required-input">*</span>Specs:</label>
+                            <textarea class="popup-textarea" id="edit-product-specs" name="Specs" placeholder="Enter product specs"> </textarea>
+                        </li>
+                        <li class="popup__list-item">
+                            <label for="rating"><span class="required-input">*</span>Rating:</label>
+                            <input class="popup-input" type="number" id="edit-product-rating" name="Rating" placeholder="Enter rating 1..5" min="1" max="5">
+                        </li>
+                        <li class="popup__list-item">
+                            <label for="supplierInfo"><span class="required-input">*</span>Supplier info:</label>
+                            <textarea class="popup-textarea" id="edit-product-supplier-info" name="SupplierInfo" placeholder="Enter supplier info"> </textarea>
+                        </li>
+                        <li class="popup__list-item">
+                            <label for="madeIn"><span class="required-input">*</span>Made in:</label>
+                            <input class="popup-input" type="text" id="edit-product-made-in" name="MadeIn" placeholder="Enter origin country">
+                        </li>
+                        <li class="popup__list-item">
+                            <label for="productionCompany"><span class="required-input">*</span>Production company name:</label>
+                            <input class="popup-input" type="text" id="edit-product-production-company" name="ProductionCompanyName" placeholder="Enter manufacturer name">
+                        </li>
+                        <li class="popup__list-item">
+                            <label for="status"><span class="required-input">*</span>Status:</label>
+                            <select class="popup-select" name="Status" id="edit-product-status" form="create-product-form">
+                                <option class="edit-option-js" value="OK">Ok</option>
+                                <option class="edit-option-js" value="STORAGE">Storage</option>
+                                <option class="edit-option-js" value="OUT_OF_STOCK">Out of stock</option>
+                            </select>
+                        </li>
+                    </ul>
+                    <footer class="popup__footer">
+                        <input type="submit" value="Save" class="popup-btn" id="submit-edit-product-btn">
+                        <input type="button" value="Cancel" class="popup-btn" id="cancel-editing-product-btn">
+                    </footer>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script type="module" src="app.js"></script>
+</body>
+</html>
